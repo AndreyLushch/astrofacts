@@ -145,8 +145,6 @@ def test_slow_events_are_not_timed(month, config):
     for sky in month:
         for h in sky.aspects:
             assert h.timed == (h.relative_speed >= config.speed.slow_threshold_deg_per_day)
-        for h in sky.stations:
-            assert h.timed == (h.body in (Body.MERCURY, Body.VENUS, Body.MARS))
         for h in sky.slow_aspects:
             assert config.is_slow(h.body_a) and config.is_slow(h.body_b)
             assert h.exact_today or min(h.orb_start, h.orb_end) <= config.orbs.background[h.aspect]

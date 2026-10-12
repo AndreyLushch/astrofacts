@@ -12,10 +12,12 @@ dynamic = ["version"]
 dependencies = [
     "pyswisseph==2.10.3.2",
     "pydantic>=2.13,<3",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
 ]
 
 [project.optional-dependencies]
-test = ["pytest", "astropy", "jplephem"]
+test = ["pytest", "httpx", "astropy", "jplephem"]
 
 [tool.setuptools.dynamic]
 version = { attr = "astrofacts.__version__" }

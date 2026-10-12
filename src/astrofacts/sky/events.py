@@ -48,7 +48,7 @@ def find_aspects(
     return hits
 
 
-def find_ingresses(trajectories: dict[Body, Trajectory], config: Config) -> list[IngressHit]:
+def find_ingresses(trajectories: dict[Body, Trajectory]) -> list[IngressHit]:
     hits: list[IngressHit] = []
     for body, tr in trajectories.items():
 
@@ -65,12 +65,12 @@ def find_ingresses(trajectories: dict[Body, Trajectory], config: Config) -> list
                     continue  # касание границы знака без перехода
                 entered = SIGN_ORDER[index] if speed > 0 else SIGN_ORDER[index - 1]
                 left = SIGN_ORDER[index - 1] if speed > 0 else SIGN_ORDER[index]
-                hits.append(IngressHit(body, left, entered, jd, speed, config.is_timed(speed)))
+                hits.append(IngressHit(body, left, entered, jd, speed))
     hits.sort(key=lambda h: h.jd)
     return hits
 
 
-def find_stations(trajectories: dict[Body, Trajectory], config: Config) -> list[StationHit]:
+def find_stations(trajectories: dict[Body, Trajectory]) -> list[StationHit]:
     hits: list[StationHit] = []
     for body, tr in trajectories.items():
         if body in (Body.SUN, Body.MOON):
@@ -82,7 +82,7 @@ def find_stations(trajectories: dict[Body, Trajectory], config: Config) -> list[
         for jd, falling in sign_changes(speed, tr.times, tr.speeds):
             hits.append(StationHit(
                 body, "retrograde" if falling else "direct", jd,
-                ephemeris.state(body, jd).longitude, not config.is_slow(body),
+                ephemeris.state(body, jd).longitude,
             ))
     hits.sort(key=lambda h: h.jd)
     return hits

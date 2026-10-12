@@ -37,12 +37,10 @@ def main() -> None:
                 dated.append(f"{local(h.jd)}  {h.body_a.value} {h.aspect.value} {h.body_b.value}"
                              f"  взаимная скорость {h.relative_speed:.3f}°/сут")
         for h in sky.ingresses:
-            totals[f"ингрессии: {'время' if h.timed else 'дата'}"] += 1
-            if not h.timed:
-                dated.append(f"{local(h.jd)}  {h.body.value} -> {h.to_sign.value}  скорость {h.speed:+.3f}°/сут")
+            totals["ингрессии: время"] += 1
         for h in sky.stations:
             if sky.start_jd <= h.jd < sky.end_jd:
-                totals[f"станции: {'время' if h.timed else 'дата'}"] += 1
+                totals["станции: время"] += 1
                 print(f"станция {local(h.jd)}  {h.body.value} {h.direction}")
 
     print(f"\n{first} + {count} сут., {tz}, порог {threshold}°/сут")

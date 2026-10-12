@@ -89,7 +89,7 @@ class Config(_Section):
         return MEAN_SPEED[body] < self.speed.slow_threshold_deg_per_day
 
     def is_timed(self, speed_deg_per_day: float) -> bool:
-        """Достаточно ли скорости события, чтобы отдавать его с временем, а не датой."""
+        """Достаточно ли взаимной скорости пары, чтобы отдавать аспект с временем, а не датой."""
         return abs(speed_deg_per_day) >= self.speed.slow_threshold_deg_per_day
 
 

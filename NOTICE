@@ -3,9 +3,9 @@ astrofacts uses Swiss Ephemeris under the GNU Affero General Public License (AGP
 Swiss Ephemeris — Copyright (C) 1997 - 2021 Astrodienst AG, Switzerland. All rights reserved.
 Source: https://github.com/aloistr/swisseph
 
-The files src/astrofacts/data/ephe/sepl_18.se1 and semo_18.se1 are Swiss Ephemeris planetary
-and lunar ephemeris files, copied unmodified from the ephe/ directory of that repository.
-They are part of Swiss Ephemeris and are redistributed here under the same licence.
+The Swiss Ephemeris data files (sepl_18.se1, semo_18.se1) are NOT part of this repository
+or of its distributions. They are downloaded at deployment time from the repository above
+by tools/fetch_ephemeris.py.
 
 Swiss Ephemeris is made available by its authors under a dual licensing system: the GNU Affero
 General Public License or the Swiss Ephemeris Professional License. This project chose the AGPL.

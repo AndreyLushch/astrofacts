@@ -56,7 +56,6 @@ class IngressHit:
     to_sign: Sign
     jd: float
     speed: float           # со знаком: отрицательная — вход попятным движением
-    timed: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -65,7 +64,6 @@ class StationHit:
     direction: str         # retrograde | direct — каким движение становится
     jd: float
     longitude: float
-    timed: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -114,6 +112,7 @@ class DaySky:
     start_jd: float            # начало локальных суток
     end_jd: float              # начало следующих суток; сутки — [start_jd, end_jd)
     lookahead_end_jd: float    # конец окна опережения; равен end_jd при нулевом окне
+    lookahead_hours: float
     length_hours: float        # длина локальных суток: 23, 24 или 25 при переводе часов
     config_hash: str
     trajectories: dict[Body, Trajectory]

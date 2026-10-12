@@ -37,10 +37,11 @@ _SWE_BODY = {
 }
 _FLAGS = swe.FLG_SWIEPH | swe.FLG_SPEED
 
-# Библиотека хранит состояние в глобальных переменных и не рассчитана на параллельные вызовы.
+# Состояние библиотеки (в том числе путь к файлам) своё у каждого потока: путь задаётся
+# в каждом потоке заново, иначе расчёт молча уходит на встроенную аналитическую модель.
 _lock = threading.RLock()
-_ready = False
-
+_thread = threading.local()
+_checked_dir: Path | None = None
 
 EPHE_ENV = "ASTROFACTS_EPHE_DIR"
 # Планеты и Луна, 1800–2399. Контрольные суммы — файлов из официального репозитория
@@ -90,10 +91,13 @@ class Eclipse:
 
 
 def _ensure_ready() -> None:
-    global _ready
-    if not _ready:
-        swe.set_ephe_path(str(check_files()))
-        _ready = True
+    global _checked_dir
+    if getattr(_thread, "ready", False):
+        return
+    if _checked_dir is None:
+        _checked_dir = check_files()
+    swe.set_ephe_path(str(_checked_dir))
+    _thread.ready = True
 
 
 def jd_from_datetime(moment: datetime) -> float:

@@ -67,7 +67,7 @@ def scan_day(day: date, tz: str, config: Config, lookahead_hours: float | None =
     all_aspects = find_aspects(
         trajectories, combinations(config.bodies, 2), tuple(dict.fromkeys((*enabled, *voc.aspects))), config
     )
-    ingresses = find_ingresses(trajectories, config)
+    ingresses = find_ingresses(trajectories)
 
     moon_aspects = [h for h in all_aspects if Body.MOON in (h.body_a, h.body_b)]
     moon_ingresses = [h for h in ingresses if h.body is Body.MOON]
@@ -113,6 +113,7 @@ def scan_day(day: date, tz: str, config: Config, lookahead_hours: float | None =
         start_jd=start,
         end_jd=end,
         lookahead_end_jd=window_end,
+        lookahead_hours=lookahead_hours,
         length_hours=interval.length_hours,
         config_hash=config.hash,
         trajectories=trajectories,
@@ -122,7 +123,7 @@ def scan_day(day: date, tz: str, config: Config, lookahead_hours: float | None =
         ingresses=tuple(h for h in ingresses if in_window(h.jd)),
         lunations=tuple(lunations),
         void_of_course=tuple(voc_intervals),
-        stations=tuple(h for h in find_stations(trajectories, config) if start <= h.jd < stations_end),
+        stations=tuple(h for h in find_stations(trajectories) if start <= h.jd < stations_end),
         moon_phase=MoonPhase(
             elongation_start=(at_start[Body.MOON].longitude - at_start[Body.SUN].longitude) % 360.0,
             elongation_end=(at_end[Body.MOON].longitude - at_end[Body.SUN].longitude) % 360.0,

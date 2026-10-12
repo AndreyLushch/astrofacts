@@ -40,7 +40,7 @@ def main() -> None:
     b = intervals(Config.model_validate(raw), first, count, tz)
 
     def fmt(jd: float, z=timezone.utc) -> str:
-        return (datetime_from_jd(jd) + timedelta(seconds=30)).astimezone(z).strftime("%d.%m %H:%M")
+        return datetime_from_jd(jd).astimezone(z).strftime("%d.%m %H:%M")  # минута усекается, как в ответе сервиса
 
     def last(v) -> str:
         if v.last_aspect is None:
