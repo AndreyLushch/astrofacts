@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+.env
+# Ядро JPL для сверочных тестов: загружается скриптом tools/fetch_reference_kernel.py
+tests/data/
+# Файлы Swiss Ephemeris: загружаются при развёртывании скриптом tools/fetch_ephemeris.py
+src/astrofacts/data/ephe/
+*.se1

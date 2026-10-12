@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "astrofacts"
+description = "Расчётный слой астрологических данных: HTTP-сервис поверх Swiss Ephemeris"
+readme = "README.md"
+license = { text = "AGPL-3.0-or-later" }
+requires-python = ">=3.12"
+dynamic = ["version"]
+dependencies = [
+    "pyswisseph==2.10.3.2",
+    "pydantic>=2.13,<3",
+]
+
+[project.optional-dependencies]
+test = ["pytest", "astropy", "jplephem"]
+
+[tool.setuptools.dynamic]
+version = { attr = "astrofacts.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+astrofacts = ["data/*.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

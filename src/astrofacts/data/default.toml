@@ -1,0 +1,47 @@
+# Конфигурация расчёта по умолчанию. Хэш действующей конфигурации попадает в meta ответа.
+# Другой файл подключается переменной окружения ASTROFACTS_CONFIG.
+
+bodies = ["sun", "moon", "mercury", "venus", "mars", "jupiter", "saturn", "uranus", "neptune", "pluto"]
+
+[aspects]
+# Минорные (semisextile, semisquare, sesquiquadrate, quincunx) включаются добавлением в список.
+enabled = ["conjunction", "sextile", "square", "trine", "opposition"]
+
+[orbs.background]
+# Орб фоновых аспектов между медленными планетами, градусы. Точные аспекты суток отбираются
+# по событию (аспект становится точным), орб к ним не применяется.
+conjunction = 3.0
+opposition = 3.0
+square = 3.0
+trine = 3.0
+sextile = 2.0
+semisextile = 1.0
+semisquare = 1.0
+sesquiquadrate = 1.0
+quincunx = 1.0
+
+[speed]
+# Порог, градусов в сутки. Событие с меньшей скоростью (взаимной — для аспекта, собственной —
+# для ингрессии) отдаётся датой без времени. Тело со средней скоростью ниже порога считается
+# медленным: его станции отдаются датой, его аспекты с другими медленными идут в фон.
+slow_threshold_deg_per_day = 0.1
+
+[void_of_course]
+# Луна без курса: от последнего точного аспекта из списка к телам из списка до смены знака.
+bodies = ["sun", "mercury", "venus", "mars", "jupiter", "saturn", "uranus", "neptune", "pluto"]
+aspects = ["conjunction", "sextile", "square", "trine", "opposition"]
+
+[stations]
+window_days = 7
+
+[lookahead]
+# Окно опережения за границей суток, часы: значение по умолчанию для параметра запроса и предел.
+default_hours = 0
+max_hours = 24
+
+[rulers]
+# modern: Скорпион — Плутон, Водолей — Уран, Рыбы — Нептун; traditional: Марс, Сатурн, Юпитер.
+scheme = "modern"
+
+[cache]
+max_entries = 512
