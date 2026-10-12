@@ -19,6 +19,9 @@
 - Dev-инстанс: `~/deploy/astrofacts-dev` (`releases/`, `current`, `ephe/`, `venvs/`)
 - Код: `src/astrofacts/`; схема ответа — `schema.py`; конфигурация расчёта — `data/default.toml`
 - Выкатка: `scripts/deploy.sh`, `scripts/dev.sh`, описание — `deploy/README.md`
+- Описание контракта для потребителей: `docs/CONSUMERS.md` — обновлять вместе со схемой
+- Прод: `/opt/astrofacts`, сервис `astrofacts`, автовыкатка `main` таймером раз в 5 минут,
+  сообщение об исходе — через внешнюю команду `DEPLOY_NOTIFY_CMD` (вне этого репозитория)
 
 ## Устройство
 - `ephemeris.py` — единственный модуль, импортирующий `swisseph`. Состояние библиотеки своё
