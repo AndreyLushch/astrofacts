@@ -101,6 +101,10 @@ scripts/dev.sh check
 
 ## Установка на прод (один раз, выполняет человек)
 
+Выполнена 2026-10-12 этими командами; раздел остаётся как инструкция на случай нового сервера.
+Перед установкой стоит проверить: Python 3.12 и та же архитектура, что у колеса; свободен
+порт 8765; с сервера доступны `github.com`, `raw.githubusercontent.com` и `pypi.org`.
+
 ```
 # пользователь сервиса и каталог инстанса
 sudo useradd --system --home-dir /opt/astrofacts --shell /usr/sbin/nologin astrofacts
@@ -121,9 +125,17 @@ sudo install -m 0644 /opt/astrofacts/current/deploy/astrofacts-deploy.service /e
 sudo install -m 0644 /opt/astrofacts/current/deploy/astrofacts-deploy.timer /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now astrofacts
-curl -s http://127.0.0.1:8765/health
+sleep 3 && curl -s http://127.0.0.1:8765/health    # сервис поднимается около секунды
+sudo systemctl start astrofacts-deploy              # пробный запуск: «уже активен — выкатывать нечего»
 sudo systemctl enable --now astrofacts-deploy.timer
 ```
+
+Правки unit-файлов в `/etc` (например, строка `DEPLOY_NOTIFY_CMD`) выкатка не затирает: шаблоны
+из `deploy/` копируются в `/etc` только вручную. Обратная сторона — изменение шаблона в
+репозитории само на прод не попадает.
+
+Версию базы часовых поясов сервис показывает в `/health` (`tzdata_version`). Она должна
+совпадать на dev и проде: обновляется пакетом `tzdata`, после чего сервис нужно перезапустить.
 
 После этого любой push в `main` — выкатка и перезапуск прода в течение ~5 минут.
 
