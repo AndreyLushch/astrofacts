@@ -151,7 +151,7 @@ astropy/ERFA по ядру JPL DE432s (`tests/data/`, в git не хранитс
 (`test-full`) пропусков не допускает, и без него релиз на dev не собирается — см.
 `deploy/README.md`.
 
-Значения, сверенные вручную с внешним источником, лежат в `tests/manual/astroseek.toml`;
+Значения, сверенные вручную с внешними источниками, лежат в `tests/manual/astroseek.toml`;
 что именно сверено, а что нет — в конце `docs/CONSUMERS.md`.
 
 Вспомогательные скрипты: `tools/precision_stats.py` — сколько аспектов получает пометку
