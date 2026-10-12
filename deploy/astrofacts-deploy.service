@@ -16,5 +16,6 @@ Environment=DEPLOY_HEALTH_URL=http://127.0.0.1:8765/health
 Environment=DEPLOY_APP_USER=astrofacts
 # каталог с колесом pyswisseph: на проде компилятора нет
 Environment=DEPLOY_WHEELS=/opt/astrofacts/wheels
-# Environment=DEPLOY_NOTIFY_CMD=/путь/к/команде   # получает текст сообщения одним аргументом
+# внешняя команда уведомлений, получает текст одним аргументом; см. deploy/README.md
+# Environment=DEPLOY_NOTIFY_CMD=/путь/к/команде
 ExecStart=/opt/astrofacts/current/scripts/deploy.sh

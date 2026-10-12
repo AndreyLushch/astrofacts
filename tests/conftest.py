@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
@@ -28,10 +29,21 @@ def config():
 @pytest.fixture(scope="session")
 def reference():
     """Независимый расчёт видимой эклиптической долготы: astropy/ERFA по ядру JPL."""
+    # Полный набор (scripts/dev.sh test-full) пропусков не допускает: без него релиз на dev не собирается.
+    required = os.environ.get("ASTROFACTS_REQUIRE_REFERENCE") == "1"
+    problem = None
     if not KERNEL.exists():
-        pytest.skip("нет ядра JPL для сверки: выполните `python tools/fetch_reference_kernel.py`")
-    pytest.importorskip("jplephem")
-    coordinates = pytest.importorskip("astropy.coordinates")
+        problem = "нет ядра JPL для сверки: выполните `python tools/fetch_reference_kernel.py`"
+    else:
+        try:
+            import jplephem  # noqa: F401
+            from astropy import coordinates
+        except ImportError as e:
+            problem = f"для сверочных тестов нужны astropy и jplephem: {e}"
+    if problem:
+        if required:
+            pytest.fail(problem, pytrace=False)
+        pytest.skip(problem)
     from astropy.time import Time
     from astropy.utils import iers
 
