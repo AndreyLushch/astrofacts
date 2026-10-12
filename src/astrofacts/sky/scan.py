@@ -105,7 +105,9 @@ def scan_day(day: date, tz: str, config: Config, lookahead_hours: float | None =
                 for h in day_aspects
             )
             if exact or min(orb_start, orb_end) <= config.orbs.background[aspect]:
-                slow_aspects.append(SlowAspect(a, b, aspect, orb_start, orb_end, exact))
+                slow_aspects.append(SlowAspect(
+                    a, b, aspect, orb_start, orb_end, exact, config.is_generational(a, b, aspect)
+                ))
 
     return DaySky(
         day=day,

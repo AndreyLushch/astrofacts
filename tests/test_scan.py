@@ -141,10 +141,27 @@ def test_march_equinox_2026(config):
     assert abs(utc(sun.jd) - datetime(2026, 3, 20, 14, 46, tzinfo=timezone.utc)) < MINUTE
 
 
-def test_slow_events_are_not_timed(month, config):
+def test_pluto_station_depends_on_nutation():
+    """Момент станции Плутона — 16.10.2026 02:40 UTC в видимых положениях (с нутацией).
+
+    Без нутации тот же расчёт даёт 03:36: у почти неподвижной планеты суточная скорость нутации
+    сравнима с её собственным ускорением. Тест падает, если система отсчёта сменится.
+    """
+    from astrofacts.rootfind import bisect
+
+    def speed(jd):
+        return ephemeris.state(Body.PLUTO, jd).speed
+
+    a = ephemeris.jd_from_datetime(datetime(2026, 10, 15, tzinfo=timezone.utc))
+    b = ephemeris.jd_from_datetime(datetime(2026, 10, 17, tzinfo=timezone.utc))
+    station = utc(bisect(speed, a, speed(a), b, speed(b)))
+    assert abs(station - datetime(2026, 10, 16, 2, 40, tzinfo=timezone.utc)) < 2 * MINUTE
+
+
+def test_slow_pair_flag_follows_the_threshold(month, config):
     for sky in month:
         for h in sky.aspects:
-            assert h.timed == (h.relative_speed >= config.speed.slow_threshold_deg_per_day)
+            assert h.slow_pair == (h.relative_speed < config.speed.slow_threshold_deg_per_day)
         for h in sky.slow_aspects:
             assert config.is_slow(h.body_a) and config.is_slow(h.body_b)
             assert h.exact_today or min(h.orb_start, h.orb_end) <= config.orbs.background[h.aspect]

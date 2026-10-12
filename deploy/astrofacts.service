@@ -1,25 +1,30 @@
-# Шаблон unit-файла. Подставьте каталог инстанса и пользователя, затем положите в /etc/systemd/system.
-# Сервис слушает только 127.0.0.1 и в сеть не ходит; файлы эфемерид загружаются при развёртывании
-# (tools/fetch_ephemeris.py <INSTANCE_DIR>/ephe), без них сервис не стартует.
 [Unit]
-Description=astrofacts: astronomical facts for astrology forecasts
+Description=astrofacts
 After=network.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
 
 [Service]
 Type=simple
-User=<USER>
-WorkingDirectory=<INSTANCE_DIR>/current
+User=astrofacts
+WorkingDirectory=/opt/astrofacts/current
+Environment=PYTHONPATH=/opt/astrofacts/current/src
+Environment=PYTHONDONTWRITEBYTECODE=1
 Environment=ASTROFACTS_HOST=127.0.0.1
 Environment=ASTROFACTS_PORT=8765
-Environment=ASTROFACTS_EPHE_DIR=<INSTANCE_DIR>/ephe
-EnvironmentFile=-<INSTANCE_DIR>/.env
-ExecStart=<INSTANCE_DIR>/venv/bin/python -m astrofacts
+Environment=ASTROFACTS_EPHE_DIR=/opt/astrofacts/ephe
+ExecStart=/opt/astrofacts/current/.venv/bin/python -m astrofacts
 Restart=always
-RestartSec=3
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+# сервису не нужны ни запись на диск, ни сеть дальше localhost
 NoNewPrivileges=true
 ProtectSystem=strict
-ProtectHome=read-only
+ProtectHome=true
 PrivateTmp=true
+IPAddressDeny=any
+IPAddressAllow=localhost
 
 [Install]
 WantedBy=multi-user.target

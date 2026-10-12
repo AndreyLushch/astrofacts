@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta
 import pytest
 
 from astrofacts import ephemeris, schema
-from astrofacts.assemble import build_day_facts
+from astrofacts.assemble import build_day_facts, truncate_to_minute
 from astrofacts.sky import scan_day
 from astrofacts.types import SIGN_ORDER, Body, Sign
 
@@ -46,7 +46,7 @@ def test_sun_position_agrees_with_ingress(sun_ingress_day):
     assert (sun.at_end.sign, sun.at_end.degree) == (Sign.SCORPIO, 0)
     (ingress,) = sun_ingress_day.ingresses
     assert (ingress.body, ingress.from_sign, ingress.to_sign) == (Body.SUN, Sign.LIBRA, Sign.SCORPIO)
-    assert ingress.when.precision == "minute" and not ingress.retrograde
+    assert not ingress.retrograde and not ingress.when.beyond_day
 
 
 def test_times_are_local_whole_minutes(sun_ingress_day):
@@ -124,7 +124,7 @@ def test_station_day(config):
     day = facts(config, date(2026, 10, 24))
     (station,) = [s for s in day.stations if s.days_ahead == 0]
     assert (station.body, station.direction, station.sign) == (Body.MERCURY, "retrograde", Sign.SCORPIO)
-    assert station.when.precision == "minute" and not station.when.beyond_day
+    assert not station.when.beyond_day and (station.when.at.hour, station.when.at.minute) == (10, 12)
     for sign_facts in day.signs.values():
         (event,) = [e for e in sign_facts.today if e.kind == "station"]
         assert event.involves_ruler == (sign_facts.ruler.body is Body.MERCURY)
@@ -133,16 +133,58 @@ def test_station_day(config):
     assert all(s.when.beyond_day for s in week_before.stations)
 
 
-def test_slow_pair_aspect_is_dated(config):
-    # Сатурн — Нептун, соединение 20.02.2026: взаимная скорость ниже порога
+def test_slow_pair_is_a_flag_not_a_time_format(config):
+    # Сатурн — Нептун, соединение 20.02.2026: взаимная скорость 0,08°/сутки, ниже порога
     day = facts(config, date(2026, 2, 20))
     (event,) = [e for e in day.exact_aspects if (e.body_a, e.body_b) == (Body.SATURN, Body.NEPTUNE)]
-    assert event.when.precision == "day" and event.when.date == date(2026, 2, 20)
+    assert event.slow_pair
+    assert event.when.at.isoformat() == "2026-02-20T19:53:00+03:00"
+    for sign_facts in day.signs.values():
+        (projected,) = [
+            e for e in sign_facts.today if e.kind == "exact_aspect" and e.body_a is Body.SATURN
+        ]
+        assert projected.slow_pair and projected.when == event.when
+    assert not any(e.slow_pair for e in day.moon.aspects)
     (slow,) = [a for a in day.background.slow_aspects if (a.body_a, a.body_b) == (Body.SATURN, Body.NEPTUNE)]
     assert slow.state == "exact"
     before = facts(config, date(2026, 2, 10))
     (slow,) = [a for a in before.background.slow_aspects if (a.body_a, a.body_b) == (Body.SATURN, Body.NEPTUNE)]
-    assert slow.state == "applying" and 0 < slow.orb_deg <= 3
+    assert slow.state == "applying" and 0 < slow.orb_deg <= 5
+
+
+def test_generational_aspects_are_marked_not_removed(config):
+    seen = {}
+    for day in (date(2025, 7, 10), date(2026, 2, 10), date(2026, 7, 10), date(2026, 12, 10)):
+        for a in facts(config, day).background.slow_aspects:
+            # пометка — свойство пары и аспекта: она не меняется от даты к дате
+            assert seen.setdefault((a.body_a, a.body_b, a.aspect.value), a.generational) == a.generational
+    assert seen[(Body.NEPTUNE, Body.PLUTO, "sextile")] is True
+    assert seen[(Body.URANUS, Body.NEPTUNE, "sextile")] is True
+    assert seen[(Body.URANUS, Body.PLUTO, "trine")] is True
+    assert seen[(Body.SATURN, Body.NEPTUNE, "conjunction")] is False
+    assert seen[(Body.SATURN, Body.URANUS, "sextile")] is False
+    assert not any(mark for (a, _, _), mark in seen.items() if a is Body.JUPITER)
+
+
+def test_retrograde_at_start_and_end(config):
+    day = facts(config, date(2026, 10, 24))  # станция Меркурия в 10:12
+    mercury = next(p for p in day.bodies if p.body is Body.MERCURY)
+    assert (mercury.retrograde_at_start, mercury.retrograde_at_end) == (False, True)
+    ruler = day.signs[Sign.GEMINI].ruler
+    assert ruler.body is Body.MERCURY
+    assert (ruler.retrograde_at_start, ruler.retrograde_at_end) == (False, True)
+    venus = next(p for p in day.bodies if p.body is Body.VENUS)
+    assert (venus.retrograde_at_start, venus.retrograde_at_end) == (True, True)
+
+
+@pytest.mark.parametrize("seconds, microseconds", [(0, 0), (29, 0), (30, 0), (31, 0), (59, 999999)])
+def test_formatting_drops_seconds_instead_of_rounding(seconds, microseconds):
+    moment = datetime(2023, 3, 3, 14, 22, seconds, microseconds)
+    assert truncate_to_minute(moment) == datetime(2023, 3, 3, 14, 22)
+
+
+def test_formatting_never_moves_an_event_to_the_next_day():
+    assert truncate_to_minute(datetime(2023, 3, 3, 23, 59, 59, 999999)) == datetime(2023, 3, 3, 23, 59)
 
 
 def test_lunation_and_eclipse(config):

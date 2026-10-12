@@ -38,6 +38,12 @@ def tzdata_version() -> str:
         return "unknown"
 
 
+def truncate_to_minute(moment: datetime) -> datetime:
+    """Секунды отбрасываются, а не округляются: 14:22:31 — это 14:22, как в астрологических
+    календарях (сверено с astro-seek.com). Момент не «уезжает» в следующую минуту, час или сутки."""
+    return moment.replace(second=0, microsecond=0)
+
+
 class _Clock:
     """Перевод моментов DaySky в локальное время запроса."""
 
@@ -46,16 +52,11 @@ class _Clock:
         self.zone = zoneinfo.ZoneInfo(sky.tz)
 
     def local(self, jd: float) -> datetime:
-        # Минута усекается, а не округляется: так принято в астрологических календарях,
-        # и момент не «уезжает» в следующую минуту, час или сутки.
         moment = datetime_from_jd(jd) + timedelta(microseconds=500)  # погрешность представления JD
-        return moment.replace(second=0, microsecond=0).astimezone(self.zone)
+        return truncate_to_minute(moment).astimezone(self.zone)
 
-    def when(self, jd: float, timed: bool = True) -> schema.TimedWhen | schema.DatedWhen:
-        beyond = self.sky.beyond_day(jd)
-        if timed:
-            return schema.TimedWhen(at=self.local(jd), beyond_day=beyond)
-        return schema.DatedWhen(date=self.local(jd).date(), beyond_day=beyond)
+    def when(self, jd: float) -> schema.When:
+        return schema.When(at=self.local(jd), beyond_day=self.sky.beyond_day(jd))
 
 
 def _phase_name(elongation_start: float, elongation_end: float) -> str:
@@ -68,7 +69,7 @@ def _phase_name(elongation_start: float, elongation_end: float) -> str:
 
 def _aspect_event(hit: AspectHit, clock: _Clock) -> schema.AspectEvent:
     return schema.AspectEvent(
-        body_a=hit.body_a, body_b=hit.body_b, aspect=hit.aspect, when=clock.when(hit.jd, hit.timed)
+        body_a=hit.body_a, body_b=hit.body_b, aspect=hit.aspect, when=clock.when(hit.jd), slow_pair=hit.slow_pair
     )
 
 
@@ -124,7 +125,8 @@ def _background(sky: DaySky) -> schema.Background:
         retrograde=[body for body, st in sky.at_start.items() if st.speed < 0],
         slow_aspects=[
             schema.SlowAspect(
-                body_a=a.body_a, body_b=a.body_b, aspect=a.aspect, orb_deg=round(a.orb_start, 1), state=state(a)
+                body_a=a.body_a, body_b=a.body_b, aspect=a.aspect, orb_deg=round(a.orb_start, 1),
+                state=state(a), generational=a.generational,
             )
             for a in sky.slow_aspects
         ],
@@ -150,7 +152,8 @@ def project(sky: DaySky, frame: Frame, focus: Body, clock: _Clock) -> schema.Sig
         today.append((h.jd, schema.ExactAspectToday(
             body_a=h.body_a, house_a=house_at(h.body_a, h.jd),
             body_b=h.body_b, house_b=house_at(h.body_b, h.jd),
-            aspect=h.aspect, when=clock.when(h.jd, h.timed), involves_ruler=focus in (h.body_a, h.body_b),
+            aspect=h.aspect, when=clock.when(h.jd), slow_pair=h.slow_pair,
+            involves_ruler=focus in (h.body_a, h.body_b),
         )))
     for h in sky.stations:
         if h.jd < sky.lookahead_end_jd:
@@ -180,7 +183,8 @@ def project(sky: DaySky, frame: Frame, focus: Body, clock: _Clock) -> schema.Sig
             sign_at_end=sign_of(end.longitude),
             house_at_start=frame.house_of(start.longitude),
             house_at_end=frame.house_of(end.longitude),
-            retrograde=start.speed < 0,
+            retrograde_at_start=start.speed < 0,
+            retrograde_at_end=end.speed < 0,
         ),
         today=[event for _, event in today],
     )
@@ -206,7 +210,8 @@ def build_day_facts(sky: DaySky, config: Config) -> schema.DayFacts:
                 body=body,
                 sign_at_start=sign_of(sky.at_start[body].longitude),
                 sign_at_end=sign_of(sky.at_end[body].longitude),
-                retrograde=sky.at_start[body].speed < 0,
+                retrograde_at_start=sky.at_start[body].speed < 0,
+                retrograde_at_end=sky.at_end[body].speed < 0,
             )
             for body in sky.at_start
         ],

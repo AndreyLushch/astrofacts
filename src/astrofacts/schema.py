@@ -31,21 +31,10 @@ class Model(BaseModel):
 
 # --- момент события ---
 
-class TimedWhen(Model):
-    """Момент с точностью до минуты, в таймзоне запроса; секунды отброшены."""
-    precision: Literal["minute"] = "minute"
+class When(Model):
+    """Момент события в таймзоне запроса, с точностью до минуты; секунды отброшены."""
     at: dt.datetime
     beyond_day: bool = Field(description="Событие в окне опережения, после конца суток")
-
-
-class DatedWhen(Model):
-    """Только дата: событие слишком медленное, чтобы называть его час."""
-    precision: Literal["day"] = "day"
-    date: dt.date
-    beyond_day: bool
-
-
-When = Annotated[Union[TimedWhen, DatedWhen], Field(discriminator="precision")]
 
 
 # --- общая часть ---
@@ -66,7 +55,14 @@ class BodyPosition(Model):
     body: Body
     sign_at_start: Sign
     sign_at_end: Sign
-    retrograde: bool = Field(description="Попятное движение на начало суток")
+    retrograde_at_start: bool
+    retrograde_at_end: bool
+
+
+SLOW_PAIR = (
+    "Взаимная скорость пары ниже порога: конфигурация почти не меняется несколько суток, "
+    "и момент точности — формальная отметка, а не событие часа"
+)
 
 
 class AspectEvent(Model):
@@ -74,6 +70,7 @@ class AspectEvent(Model):
     body_b: Body
     aspect: Aspect
     when: When
+    slow_pair: bool = Field(description=SLOW_PAIR)
 
 
 class MoonPhase(Model):
@@ -157,11 +154,14 @@ class SlowAspect(Model):
     aspect: Aspect
     orb_deg: float = Field(description="Отклонение от точного аспекта на начало суток, до 0,1°")
     state: Literal["applying", "exact", "separating"]
+    generational: bool = Field(
+        description="Пара проходит орб этого аспекта в среднем дольше порога из конфигурации: фон эпохи, а не этих суток"
+    )
 
 
 class Background(Model):
     sun: SunPosition
-    retrograde: list[Body]
+    retrograde: list[Body] = Field(description="Тела в попятном движении на начало суток")
     slow_aspects: list[SlowAspect]
 
 
@@ -179,7 +179,8 @@ class Ruler(Model):
     sign_at_end: Sign
     house_at_start: House
     house_at_end: House
-    retrograde: bool
+    retrograde_at_start: bool
+    retrograde_at_end: bool
 
 
 class HouseIngressToday(Model):
@@ -199,6 +200,7 @@ class ExactAspectToday(Model):
     house_b: House
     aspect: Aspect
     when: When
+    slow_pair: bool = Field(description=SLOW_PAIR)
     involves_ruler: bool
 
 

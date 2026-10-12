@@ -29,6 +29,10 @@ class OrbsConfig(_Section):
     background: dict[Aspect, float]
 
 
+class BackgroundConfig(_Section):
+    generational_after_days: int = Field(ge=1, le=3650)
+
+
 class SpeedConfig(_Section):
     slow_threshold_deg_per_day: float = Field(gt=0)
 
@@ -59,6 +63,7 @@ class Config(_Section):
     bodies: tuple[Body, ...]
     aspects: AspectsConfig
     orbs: OrbsConfig
+    background: BackgroundConfig
     speed: SpeedConfig
     void_of_course: VoidOfCourseConfig
     stations: StationsConfig
@@ -88,9 +93,16 @@ class Config(_Section):
     def is_slow(self, body: Body) -> bool:
         return MEAN_SPEED[body] < self.speed.slow_threshold_deg_per_day
 
-    def is_timed(self, speed_deg_per_day: float) -> bool:
-        """Достаточно ли взаимной скорости пары, чтобы отдавать аспект с временем, а не датой."""
-        return abs(speed_deg_per_day) >= self.speed.slow_threshold_deg_per_day
+    def is_generational(self, a: Body, b: Body, aspect: Aspect) -> bool:
+        """Проходит ли пара орб этого аспекта в среднем дольше порога."""
+        relative = abs(MEAN_SPEED[a] - MEAN_SPEED[b])
+        if relative == 0.0:
+            return True
+        return 2.0 * self.orbs.background[aspect] / relative > self.background.generational_after_days
+
+    def is_slow_pair(self, relative_speed_deg_per_day: float) -> bool:
+        """Взаимная скорость пары ниже порога: конфигурация держится сутками."""
+        return abs(relative_speed_deg_per_day) < self.speed.slow_threshold_deg_per_day
 
 
 def load_config(path: str | os.PathLike[str] | None = None) -> Config:

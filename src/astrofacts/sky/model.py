@@ -46,7 +46,7 @@ class AspectHit:
     aspect: Aspect
     jd: float
     relative_speed: float  # градусов в сутки в момент точности, по модулю
-    timed: bool            # скорость не ниже порога: момент отдаётся с временем
+    slow_pair: bool        # скорость ниже порога: конфигурация держится сутками
 
 
 @dataclass(frozen=True, slots=True)
@@ -103,6 +103,7 @@ class SlowAspect:
     orb_start: float
     orb_end: float
     exact_today: bool
+    generational: bool     # пара проходит орб в среднем дольше порога из конфигурации
 
 
 @dataclass(frozen=True, slots=True)

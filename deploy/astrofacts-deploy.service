@@ -1,0 +1,20 @@
+[Unit]
+Description=astrofacts — выкатка ветки main
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# запускается от root: рестарт сервиса без sudo. Репозиторий публичный, ключ не нужен.
+Environment=HOME=/root
+Environment=DEPLOY_ROOT=/opt/astrofacts
+Environment=DEPLOY_REPO=https://github.com/AndreyLushch/astrofacts.git
+Environment=DEPLOY_REF=main
+Environment=DEPLOY_SERVICE=astrofacts
+Environment=DEPLOY_HEALTH_URL=http://127.0.0.1:8765/health
+# тесты выполняются от пользователя сервиса
+Environment=DEPLOY_APP_USER=astrofacts
+# каталог с колесом pyswisseph: на проде компилятора нет
+Environment=DEPLOY_WHEELS=/opt/astrofacts/wheels
+# Environment=DEPLOY_NOTIFY_CMD=/путь/к/команде   # получает текст сообщения одним аргументом
+ExecStart=/opt/astrofacts/current/scripts/deploy.sh

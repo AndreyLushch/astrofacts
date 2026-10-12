@@ -43,7 +43,7 @@ def find_aspects(
             for target in _targets(aspect):
                 for jd in crossings(angle, rate, ta.times, separation, rates, target):
                     speed = abs(rate(jd))
-                    hits.append(AspectHit(a, b, aspect, jd, speed, config.is_timed(speed)))
+                    hits.append(AspectHit(a, b, aspect, jd, speed, config.is_slow_pair(speed)))
     hits.sort(key=lambda h: h.jd)
     return hits
 

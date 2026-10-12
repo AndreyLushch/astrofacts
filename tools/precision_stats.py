@@ -1,4 +1,4 @@
-"""Сколько событий отдаётся с временем, а сколько датой, при текущем пороге скорости.
+"""Сколько аспектов получает пометку slow_pair при текущем пороге скорости.
 
     python tools/precision_stats.py 2026-02-01 60 [Europe/Moscow]
 """
@@ -32,21 +32,21 @@ def main() -> None:
         sky = scan_day(first + timedelta(days=i), tz, config, 0)
         for h in sky.aspects:
             group = "аспекты Луны" if h.body_a is Body.MOON or h.body_b is Body.MOON else "аспекты планет"
-            totals[f"{group}: {'время' if h.timed else 'дата'}"] += 1
-            if not h.timed:
+            totals[f"{group}: {'slow_pair' if h.slow_pair else 'обычные'}"] += 1
+            if h.slow_pair:
                 dated.append(f"{local(h.jd)}  {h.body_a.value} {h.aspect.value} {h.body_b.value}"
                              f"  взаимная скорость {h.relative_speed:.3f}°/сут")
         for h in sky.ingresses:
-            totals["ингрессии: время"] += 1
+            totals["ингрессии"] += 1
         for h in sky.stations:
             if sky.start_jd <= h.jd < sky.end_jd:
-                totals["станции: время"] += 1
+                totals["станции"] += 1
                 print(f"станция {local(h.jd)}  {h.body.value} {h.direction}")
 
     print(f"\n{first} + {count} сут., {tz}, порог {threshold}°/сут")
     for key in sorted(totals):
         print(f"  {key}: {totals[key]}")
-    print("\nСобытия, отданные датой:")
+    print("\nАспекты с пометкой slow_pair:")
     for line in dated:
         print("  " + line)
 

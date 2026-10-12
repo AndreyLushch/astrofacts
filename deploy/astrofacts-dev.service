@@ -1,0 +1,26 @@
+# Шаблон: <USER> и <HOME> подставляются при установке, см. deploy/README.md
+[Unit]
+Description=astrofacts — dev
+After=network.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=<USER>
+# код — активный релиз (scripts/deploy.sh переключает ссылку current)
+WorkingDirectory=<HOME>/deploy/astrofacts-dev/current
+Environment=PYTHONPATH=<HOME>/deploy/astrofacts-dev/current/src
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=ASTROFACTS_HOST=127.0.0.1
+Environment=ASTROFACTS_PORT=8765
+# файлы эфемерид общие для всех релизов; их загружает выкатка, сервис в сеть не ходит
+Environment=ASTROFACTS_EPHE_DIR=<HOME>/deploy/astrofacts-dev/ephe
+ExecStart=<HOME>/deploy/astrofacts-dev/current/.venv/bin/python -m astrofacts
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

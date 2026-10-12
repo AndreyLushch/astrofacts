@@ -1,0 +1,3 @@
+# Шаблон: <USER> подставляется при установке, см. deploy/README.md
+# Разрешает пользователю сервиса без пароля ровно одну команду — перезапуск dev-сервиса.
+<USER> ALL=(root) NOPASSWD: /usr/bin/systemctl restart astrofacts-dev
